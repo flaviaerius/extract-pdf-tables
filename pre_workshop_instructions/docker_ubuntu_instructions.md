@@ -21,8 +21,7 @@ In this step we will update all system packages, and then install the Docker-rel
 `sudo apt update`  
 `sudo apt install apt-transport-https ca-certificates curl software-properties-common` 
 
-# After the second command starts, it will ask you for **permission** to install the packages. You will need to type ‘**Yes**’ into the terminal to start the installation process.
-
+After the second command starts, it will ask you for **permission** to install the packages. You will need to type ‘**Yes**’ into the terminal to start the installation process.  
 You will be asked to select your region by entering the corresponding number from the list.  
 You will also need to then select your city (or the closest one available), and next your correspondent timezone.
 
