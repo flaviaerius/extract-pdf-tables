@@ -43,13 +43,14 @@ library(tesseract)
 ```
 
 
-## Docker
+## Program requirements
 
-Please refer to the provided instructions available in PDF and Markdown formats for Windows, Mac, and Ubuntu, located in the `docker_instructions` directory.
+**Docker** is a required program for this workshop. Don't worry, it will be a simple use, nothing complicated. Please refer to the provided instructions available in PDF and Markdown formats for Windows, Mac, and Ubuntu, located in the `docker_instructions` directory.
 
 - **Markdown version**: You can copy the code directly from GitHub, but note that the tutorial does not contain images.
 
-- **PDF version**: Includes all images of the tutorial, but you will need to download the files separately if you want to copy the code.
+- **PDF version**: Includes all images of the tutorial, but you will need to download the file of interest if you want to copy the code.
+
 
 
 
