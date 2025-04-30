@@ -1,0 +1,300 @@
+---
+title: "Extracting Tables From PDF - Tabulizer"
+author: "Flávia E. Rius"
+format:
+  html:
+    code-tools: true
+    code-overflow: scroll
+    embed-resources: true
+---
+
+# First instructions
+
+Please render this document to access the first part, referencing the extraction with docker using the terminal.
+
+# Extraction With Tabulizer From Docker Image
+
+To extract with tabulizer without having any trouble with JAVA, Rjava or anything, we will use the docker image generously made publicly available by Vp Nagraj. You can refer to [his blogpost](https://www.nagraj.net/notes/docker-tabulizer/) if you want to understand the details about how the image was created and why.
+
+## Extracting the csv file from PDF
+
+The first step is to open your PDF and see in which page the table you want to extract is contained. For the file that we will use, `prs_gastric_cancer_wjgo.pdf`, the table is located in page 8.
+
+This is a review paper on the studies of polygenic risk score (PRS) for gastric cancer. It reviews the literature and shows data regarding the findings. While we will not get into the details of this research, it is important to know that PRS is a score derived from small effects coming from a lot of variants in the DNA (variants are base-pairs that vary from a reference genome). The table we will extract has some of these variants and their effects (allele and odds ratio).
+
+Create the desired structure to use the docker image as a container to perform the extraction.
+
+In his blogpost about the docker image, Vp Nagraj explains that the extraction should have the following structure:
+
+```bash
+
+mkdir output
+# table of interest is on page 5 of some.pdf
+infile=some.pdf
+docker run -ti \
+-v $(pwd)/$infile:/$infile \
+-v $(pwd)/output:/output vpnagraj/tabulizer $infile 5
+
+```
+
+If you have run the docker installation steps for your OS, the image is already available in your computer. Note that, as the docker instructions, there will be different code and information regarding each OS. Please click on the tab that refers to your OS.
+
+You can now open a terminal and go to the directory where the repository you have downloaded from github is located. For example:
+
+::: {.panel-tabset}
+
+### Windows
+
+```bash
+cd Documents\extract-pdf-tables\tabulizer
+```
+
+### Mac and Ubuntu (Linux)
+
+```bash
+cd Documents/extract-pdf-tables/pdf
+```
+
+:::
+
+Note that "Documents" here is just an example. Please use the path where your file is located.
+
+-- 
+
+Once there, go to the pdf directory and create the `output` directory:
+
+```bash
+mkdir output
+
+```
+
+Now, let's create the structure needed for extraction.
+
+::: {.panel-tabset}
+
+### Windows
+
+```bash
+docker run -ti \
+  -v C:\your\path\here\extract-pdf-tables\pdf\prs_gastric_cancer.pdf:/prs_gastric_cancer.pdf \ 
+  -v C:\your\path\here\extract-pdf-tables\pdf\output:/output \ 
+  vpnagraj/tabulizer prs_gastric_cancer.pdf 8
+
+```
+
+### Mac and Ubuntu (Linux)
+
+```bash
+infile=prs_gastric_cancer.pdf
+docker run -ti \
+  -v $(pwd)/$infile:/$infile \
+  -v $(pwd)/output:/output vpnagraj/tabulizer $infile 8
+```
+
+:::
+
+Several warning messages might appear in the terminal. Don’t worry, just ignore them. 
+A SUCCESS message in the end will mark the completed extraction. 
+
+Check your `output` directory by running:
+
+::: {.panel-tabset}
+
+### Windows
+
+```bash
+dir output
+```
+
+### Mac and Ubuntu (Linux)
+
+```bash
+ls output
+```
+
+:::
+
+If a file named `prs_gastric_cancer_wjgo_8.csv` is prompted to the terminal, you have successfully completed your first step of extraction.
+
+Congratulations!
+
+--
+
+The next step is to clean this table so that it is useful for your data exploration in R (or anywhere else).
+
+# Cleaning the data
+
+Before starting the table cleaning, we will load the tidyverse library.
+
+```{r}
+library(tidyverse)
+```
+
+
+# Making data ready
+
+We will keep the original table here for comparison.
+
+![Table WJGO](../images/table_prs_gastric_cancer_wjgo.jpeg)
+The very first step that you should have is an **aim with the table**. 
+
+The table we will work with is from a paper gathering data on SNPs from the studies included in this paper. 
+
+Let's say that we want to create a plot with the SNPs (ids that start with an rs) that appear the most between studies. Also, we want to check if their OR direction is the same. We would need to do a certain cleaning that establishes each SNP in a row, and would not have to bother about the columns Age or Sex.
+
+For the purpose of learning as much as possible, in this workshop you will learn how to clean the full table.
+
+Let's get it started by reading the pdf table csv file into R.
+
+```{r}
+pdf1 <- read_csv("../output/prs_gastric_cancer1_8.csv")
+```
+
+Let's explore the data so far. Since it does not have a lot of rows, we can see it all.
+
+```{r}
+pdf1
+```
+
+It is possible to see that the original header is not set as column names.
+Also, the table caption is set as the last row.
+
+Let's focus on that as the first step.
+
+```{r}
+
+```
+
+For all cases it is possible to remove \r completely to improve readability and remove unuseful data. 
+We will substitute it by a single space because each line has the \r in a different position, and this will help us further.
+
+```{r}
+
+```
+
+## Column Ref
+
+We will now clean the column Ref..
+
+ -> First you do step by step and see it, and then, you assign to a new variable.
+
+```{r}
+
+```
+
+Column Ref is done! I like better lowercase column names bc it is faster to write.
+
+## Population, Design and Group
+
+Let's move to the next three columns with small adjustments.
+
+```{r}
+
+```
+
+## Sample size
+
+In this case, it is worth separating first and then dealing with the pattern of "," or "cases in".
+
+But first, how do we know which number are cases and which are controls? 
+- first: previous columns listing the group order first GC (gastric cancer cases) and then HC (healthy controls), 
+- second: it is much more common to have more controls then cases, and in all columns with the "," only, but one, the number on the left is smaller than the one on the right.
+
+We have decided that we will keep the validation set sample sizes, because mainly by research this is the sample with the specific population ancestry (information retrieved by going to the references and reading the methods). Discovery samples are generally european. You should search for information or decide this kind of stuff based on what data you need to extract and what makes more sense keeping.
+
+```{r}
+
+  
+```
+
+## Sex
+
+Let's analyze again to see what we need to do. Done below.
+
+```{r}
+
+```
+
+## Age
+
+This is the most disorganized column, but here I will show you how would I organize it.
+There are two different informations here in this column. The majority has an overview of the total sample for the number below and number above 60yo.
+The other information is the average age for cases and average age for controls, which, in my opinion, is a much more valuable information, because this is something that is worth evaluating in a case-control statistical analysis, perhaps to include age as a covariate in a model.
+
+1. Create column with n_less_60 and n_bigger_equal_60
+2. Create other columns avg_age_ctrls, sd_age_ctrls, avg_age_cases, sd_age_ctrls
+
+```{r}
+
+```
+
+## SNPs
+
+Thinking about the useful data structure, we need to have one snp in each row. Let's split the last column then, such as each SNP id is in a row.
+
+```{r}
+
+```
+
+What if you have a big table and you can't see it through "view". 
+You can use grep() to find a certain character and see if you need to substitute it. 
+
+For example:
+
+```{r}
+
+```
+
+There are other approaches, for example, trying to transform into numeric and see if some NA come up.
+
+## Adjust variable classes
+
+Let's check the summary to understand if there is any variable that can change classes. For example, character to factor, thinking about the usefulness.
+
+```{r}
+
+```
+
+About the columns that are character, let's see if any need to change classes.
+- first_author: in this long format, it is useful to turn into factor. 
+- ref_number: same
+- year: interesting to turn 
+- population: interesting to turn into factor bc we can evaluate number of studies with each population - it is a category
+- design: two categories, therefore it is useful to turn into factor
+- snps: we can change it to factor, it is easier to evaluate snps in more than one study
+- effect_allele: since there are only 4 DNA bases (ATCG), it is super usefun to turn this into a factor
+
+
+```{r}
+
+```
+
+Let's explore our final table.
+
+```{r}
+
+```
+
+## Sanity-check: original vs. clean table
+
+Check all columns for the first and second studies.
+Check first two or three SNP entries, and last.
+
+```{r, include = F}
+# view(pdf1_final)
+```
+
+
+Voilá! The table is ready.
+
+Let's save it so we can use further to explore and analyze what we want.
+
+```{r}
+# write_csv(pdf1_final, "../clean_data/prs_gastric_cancer1_clean.csv")
+```
+
+
+
+
+
+
