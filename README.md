@@ -45,6 +45,13 @@ library(tesseract)
 
 ## Program requirements
 
+### Quarto
+
+**Quarto** is required to render the documents. Please install using
+[this link](https://quarto.org/docs/get-started/).
+
+### Docker
+
 **Docker** is a required program for this workshop. Don’t worry, it will
 be a simple use, nothing complicated. Please refer to the provided
 instructions available in PDF and Markdown formats for Windows, Mac, and
