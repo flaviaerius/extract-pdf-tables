@@ -147,7 +147,7 @@ For the purpose of learning as much as possible, in this workshop you will learn
 Let's get it started by reading the pdf table csv file into R.
 
 ```{r}
-pdf1 <- read_csv("../output/prs_gastric_cancer1_8.csv")
+pdf1 <- read_csv("../pdf/output/prs_gastric_cancer_wjgo_8.csv")
 ```
 
 Let's explore the data so far. Since it does not have a lot of rows, we can see it all.
