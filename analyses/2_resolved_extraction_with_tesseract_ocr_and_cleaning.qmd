@@ -1,0 +1,148 @@
+---
+title: "Extracting Tables From PDF - Tesseract"
+author: "Flávia E. Rius"
+format: html
+embed-resources: true
+---
+
+## Prepare image of table
+
+The pdf we are using for this task is from a 1926 [paper](https://doi.org/10.1128/jb.12.5.343-353.1926) about cellulose fermentation, conducted by microorganisms such as bacteria and fungus.
+
+The first step to extract a table with `ocr()` from the `{tesseract}` package is to open the PDF file and take a print screen selection of exactly the table you need, and save this as an image.
+
+Please use the directory "images" available in the repository to save your file. 
+
+If you have never done this (selected print screen), please refer to the instructions below to do so.
+
+::: {.panel-tabset}
+
+### Windows
+
+Win + Shift + S
+
+### Mac  
+
+Cmd + Shift + 4
+
+### Ubuntu 
+
+Print Screen or fn + Print Screen key (for small laptops without a single print screen key)
+
+:::
+
+Similarly with the `{tabulizer}` tutorial, we will keep the image here for referral.
+
+![Table OCR](../images/actinomyces.png)
+
+## Data structuring
+
+Load the required libraries. If you still have not installed them, please follow the steps described in the README file of the [repository on github](https://github.com/flaviaerius/extract-pdf-tables.git).
+
+```{r}
+library(tesseract)
+library(tidyverse)
+```
+
+Read the image here with `ocr()`
+
+```{r}
+raw_data <- ocr("../images/actinomyces.png")
+```
+
+What do you see that is weird about this extraction that we did not have for the tabulizer extraction, for example?
+
+
+```{r}
+lines_data <- strsplit(raw_data, split = "\n") %>%
+  unlist()
+```
+
+We can see that first entry contains the header, but in an unstructured way, and second entry is empty.
+
+About the header (column names), it is easier to create it from scratch than to structure it, given the absence of a clear split pattern and errors included. Therefore, we can create a header based on the table image, and remove the read one.
+
+```{r}
+header <- c("hours", "extract_from_actinomyces_cells", "control_no_extract")
+```
+
+Let's remove the first two entries then.
+
+```{r}
+lines_data_body <- lines_data[-c(1,2)]
+```
+
+Let's create a dataframe from this character vector so we can manipulate it better.
+
+```{r}
+df <- data.frame(single_column = lines_data_body)
+```
+
+There are two main things to do here. Separate the dataframe into three columns, replace ll by 11 (misread by the tool), and transform the classes in order to analyze them better.
+
+Let's proceed.
+
+```{r}
+df_separated <- df %>% separate(single_column, into = header, sep = " ")
+```
+
+Perfect!
+
+Now let's replace ll by 11.
+
+```{r}
+df_clean <- df_separated %>%
+  mutate(control_no_extract = if_else(control_no_extract == "ll", "11", control_no_extract))
+# Note that here 11 should be between paretheses because the class of the column is character, due to the previous "ll" presence. 
+
+# Alternatively, use base R to assign the value to the specific "cell" of your dataframe
+# df_separated[df_separated$control_no_extract == "ll", "control_no_extract"] <- "11"
+# df_clean <- df_separated
+```
+
+Okay, now let's check again the column classes.
+
+```{r}
+glimpse(df_clean)
+```
+
+All character. To make it more useful, let's turn columns 2 and 3 into numeric, and 1 into an ordered factor. Alternatively, you can replace "Initial" by 0, and turn the first column into numeric too.
+
+```{r}
+df_final <- df_clean %>%
+  mutate(hours = factor(hours, levels = df_clean$hours, ordered = T), # fine to do this only because it is already ordered
+         extract_from_actinomyces_cells = as.numeric(extract_from_actinomyces_cells),
+         control_no_extract = as.numeric(control_no_extract))
+```
+
+Congratulations! Your table is clean and ready to go. 
+
+-- 
+
+Since this was a small table, a plot will be convenient.
+
+```{r}
+df_final %>%
+  pivot_longer(cols = c(extract_from_actinomyces_cells, control_no_extract), names_to = "group", values_to = "million_units") %>%
+  ggplot(aes(x = hours, y = million_units, group = group)) +
+  geom_line(aes(color = group)) +
+  theme_bw() +
+  ggtitle("Actinomyces addition effect on growth of C. folia")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
